@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>智慧咖啡決策系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body {
+      background: url('donna-white-q9_90zABZ74-unsplash.jpg') no-repeat center center fixed;
+      background-size: cover;
+      color: #4e342e;
+    }
+    .hero-overlay {
+      background-color: rgba(0, 0, 0, 0.4);
+    }
+  </style>
+</head>
+<body>
+
+<!-- Header -->
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+  <div class="container">
+    <a class="navbar-brand fw-bold text-warning d-flex align-items-center" href="dripcoffee.html">
+      <img src="original.jpg" width="24" height="24" class="me-2"> 咖啡智策平台
+    </a>
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+      <ul class="navbar-nav">
+        <li class="nav-item"><a class="nav-link text-warning" href="ai.html">AI 咖啡助理</a></li>
+        <li class="nav-item"><a class="nav-link text-warning" href="beginner.html">教學</a></li>
+        <li class="nav-item"><a class="nav-link text-warning" href="menu.html">本月豆單</a></li>
+        <li class="nav-item"><a class="btn btn-warning text-white ms-2" href="login.html">登入</a></li>
+      </ul>
+    </div>
+  </div>
+</nav>
+
+<!-- Hero Section -->
+<div class="position-relative text-white py-5 text-center hero-overlay">
+  <div class="container py-5">
+    <h1 class="display-5 fw-bold mb-3">智慧分析，調製最佳手沖咖啡策略</h1>
+    <p class="lead mb-4">從手沖到顧客回饋，一手掌握你的手沖咖啡事業決策關鍵</p>
+    <a href="steps.html" class="btn btn-warning btn-lg text-white">立即開始</a>
+  </div>
+</div>
+
+<!-- KPI Section -->
+<div class="container py-5">
+  <div class="row g-4 text-center">
+    <div class="col-md-4">
+      <div class="bg-white rounded shadow p-4 h-100">
+        <h4 class="fw-bold">銷售成長率</h4>
+        <p class="display-6 text-warning">+12%</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="bg-white rounded shadow p-4 h-100">
+        <h4 class="fw-bold">顧客滿意度</h4>
+        <p class="display-6 text-warning">93%</p>
+      </div>
+    </div>
+    <div class="col-md-4">
+      <div class="bg-white rounded shadow p-4 h-100">
+        <h4 class="fw-bold">最佳產品豆</h4>
+        <p class="display-6 text-warning">衣索比亞班奇馬吉瑰夏露西藝伎</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Chart Section -->
+<div class="container pb-5" id="Charts">
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <h4 class="fw-bold mb-3">月銷售趨勢</h4>
+    <canvas id="coffeeChart" height="100"></canvas>
+  </div>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <h4 class="fw-bold mb-3">手沖品項偏好分析</h4>
+    <canvas id="preferenceChart" height="100"></canvas>
+    <p class="text-muted mt-2 small"></p>
+  </div>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <h4 class="fw-bold mb-3">門市營運比較</h4>
+    <canvas id="branchChart" height="100"></canvas>
+  </div>
+
+  <div class="bg-white rounded shadow p-4 mb-4">
+    <h4 class="fw-bold mb-3">顧客回饋關鍵字雲</h4>
+    <p class="text-muted">☕ 服務好 ✨ 咖啡豆品質佳,風味層次棒 ☁️ 環境舒適，又有好喝的手沖 🧊 不只熱手沖，冰沖咖啡也超推 ☀️ 夏天首選</p>
+  </div>
+
+  <div class="bg-white rounded shadow p-4">
+    <h4 class="fw-bold mb-3">AI 手沖建議面板</h4>
+    <ul class="list-unstyled">
+      <li>📌 初學者可從 V60 或 Kalita 開始，操作穩定、資源多</li>
+      <li>📌 建議採用中淺焙豆，搭配 92–94°C 水溫練習風味辨識</li>
+      <li>📌 練習控制注水流速與粉水比（建議比例 1:15）</li>
+      <li>📌 若偏好酸質風味，可嘗試日曬豆與中段注水變化</li>
+      <li>📌 錄下萃取流程，有助於調整變因與建立感官記憶</li>
+    </ul>
+  </div>
+
+<!-- Back to Top -->
+<button onclick="window.scrollTo({top:0, behavior:'smooth'})"
+  class="btn btn-warning rounded-circle position-fixed bottom-0 end-0 m-4 shadow text-white">
+  ↑
+</button>
+
+<!-- Footer -->
+<footer class="text-center text-muted py-4 bg-light">
+  © 2025 咖啡智策平台 ｜ 製作人：林家詮、謝忠錦 ｜ Email: example@mail.com
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const ctx = document.getElementById('coffeeChart')?.getContext('2d');
+if (ctx) {
+  new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+      datasets: [{
+        label: '月銷售額 (千元)',
+        data: [32, 38, 45, 50, 58, 62],
+        borderColor: '#b08b64',             
+        backgroundColor: 'rgba(216,195,165,0.5)', 
+        fill: true,
+        tension: 0.4
+      }]
+    }
+    
+  });
+}
+
+  new Chart(document.getElementById('preferenceChart'), {
+    type: 'bar',
+    data: {
+      labels: ['衣索比亞班奇馬吉瑰夏露西藝伎', '巴拿馬翡翠莊園紅標藝妓', '哥倫比亞天堂莊園藝妓', '台灣阿里山鄒築園藝妓', '秘魯帕恰格帕塔莊園藝伎'],
+      datasets: [{
+        label: '本月購買次數',
+        data: [180, 80, 150, 40, 90],
+        backgroundColor: '#a1887f'
+      }]
+    }
+  });
+
+  new Chart(document.getElementById('branchChart'), {
+    type: 'radar',
+    data: {
+      labels: ['服務', '清潔', '營收', '人氣', '續購率'],
+      datasets: [
+        {
+          label: '東區門市',
+          data: [90, 80, 75, 88, 85],
+          backgroundColor: 'rgba(255,193,7,0.2)',
+          borderColor: '#FFC107'
+        },
+        {
+          label: '西區門市',
+          data: [70, 85, 65, 78, 80],
+          backgroundColor: 'rgba(76,175,80,0.2)',
+          borderColor: '#4CAF50'
+        }
+      ]
+    }
+  });
+</script>
+</body>
+</html>

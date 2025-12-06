@@ -1,1 +1,31 @@
-node_modules
+# build / 依賴
+node_modules/
+dist/
+build/
+
+# 系統暫存
+.DS_Store
+*.log
+
+# 私密設定
+.env
+.env.*
+# VS Code
+.vscode/
+# 大型/不必要檔案（若不需上傳）
+*.mp4
+*.ogv
+*.zip
+*.JPG
+*.jpg
+*.png
+
+# 既有規則（保留）
+node_modules/
+dist/
+build/
+.DS_Store
+*.log
+.env
+.env.*
+.vscode/

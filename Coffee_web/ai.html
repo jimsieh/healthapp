@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI 咖啡助理</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body class="bg-light">
+
+  <!-- 導覽列 -->
+  <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
+    <div class="container">
+      <a class="navbar-brand fw-bold text-warning d-flex align-items-center" href="dripcoffee.html">
+        <img src="original.jpg" width="24" height="24" class="me-2"> 咖啡智策平台
+      </a>
+      <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+        <ul class="navbar-nav">
+          <li class="nav-item"><a class="nav-link text-warning" href="ai.html">AI 咖啡助理</a></li>
+          <li class="nav-item"><a class="nav-link text-warning" href="beginner.html">教學</a></li>
+          <li class="nav-item"><a class="nav-link text-warning" href="menu.html">本月豆單</a></li>
+          <li class="nav-item"><a class="btn btn-warning text-white ms-2" href="login.html">登入</a></li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <!-- 主內容 -->
+  <main class="container py-5">
+    <h2 class="fw-bold mb-4">☕ AI 咖啡助理</h2>
+    
+    <form id="coffeeForm" class="row g-3">
+      <div class="col-md-6">
+        <label for="dripper" class="form-label">選擇濾杯</label>
+        <select id="dripper" class="form-select">
+          <option selected>請選擇</option>
+          <option>V60</option>
+          <option>Kalita</option>
+          <option>Origami</option>
+          <option>法蘭絨濾布</option>
+          <option>星芒濾杯</option>
+          <option>川流濾杯</option>
+        </select>
+      </div>
+
+      <div class="col-md-6">
+        <label for="flavor" class="form-label">偏好風味</label>
+        <select id="flavor" class="form-select">
+            <option selected>請選擇</option>
+            <option>茉莉花香 / 花果調</option>
+            <option>檸檬柑橘 / 清爽酸值</option>
+            <option>莓果熱帶 / 發酵果香</option>
+            <option>茶感平衡 / 橙花紅茶</option>
+            <option>堅果奶油 / 焙烤甜感</option>
+          </select>
+      </div>
+
+      <div class="col-12">
+        <button type="button" class="btn btn-warning" onclick="generateSuggestion()">產生建議</button>
+      </div>
+    </form>
+
+    <div class="mt-4">
+      <h5 class="fw-bold">AI 建議：</h5>
+      <p id="result" class="text-muted">請選擇濾杯與風味偏好後點選按鈕。</p>
+    </div>
+  </main>
+  <script>
+  const suggestions = {
+    "V60|茉莉花香 / 花果調": "使用 V60 搭配偏好「茉莉花香 / 花果調」，適合用於清爽與乾淨風味的展現，透過分段注水控制萃取。建議使用 91°C 熱水，研磨度為中細，萃取時間約 2:30，以建議展現花香與明亮果酸。",
+    "V60|檸檬柑橘 / 清爽酸值": "使用 V60 搭配偏好「檸檬柑橘 / 清爽酸值」，可精準控制酸值與餘韻平衡。建議使用 90°C 熱水，中細研磨，總萃取約 2:20。",
+    "V60|莓果熱帶 / 發酵果香": "使用 V60 可呈現乾淨而層次豐富的果香，建議使用 92°C 熱水，中研磨，悶蒸稍長，釋放莓果與發酵調性。",
+    "V60|茶感平衡 / 橙花紅茶": "建議使用 V60 控制注水節奏，91°C 熱水，中細研磨，展現紅茶般清香與橙花尾韻，適合慢注方式。",
+    "V60|堅果奶油 / 焙烤甜感": "V60 可搭配較粗研磨與較高水溫（93°C），展現焙烤感與焦糖甜味，建議分段注水在 3:00 完成。",
+    
+    "Kalita|茉莉花香 / 花果調": "Kalita 平底設計提供穩定萃取，建議使用 91°C 水溫與中細研磨，可保留花香明亮酸質。",
+    "Kalita|檸檬柑橘 / 清爽酸值": "平衡酸值需控制粉層厚度與流速，Kalita 對此表現穩定，90°C 熱水可保清爽不刺激。",
+    "Kalita|莓果熱帶 / 發酵果香": "中焙莓果藝伎可用 Kalita 萃取出果醬感，建議中研磨、92°C 熱水、悶蒸 40 秒。",
+    "Kalita|茶感平衡 / 橙花紅茶": "Kalita 穩定流速有助茶感滑順呈現，水溫約 91°C，採小圈連續注水，表現極佳。",
+    "Kalita|堅果奶油 / 焙烤甜感": "中偏粗研磨與 93°C 水溫搭配 Kalita，能有效提升焙烤甜感與奶油滑順口感。",
+  
+    "Origami|茉莉花香 / 花果調": "Origami 對水流反應靈敏，91°C 熱水快速注入花果香氣，建議中細研磨、短時間萃取。",
+    "Origami|檸檬柑橘 / 清爽酸值": "搭配淺焙柑橘風味豆，使用 Origami 提升透明度與酸質層次，水溫 90°C 為佳。",
+    "Origami|莓果熱帶 / 發酵果香": "選用中焙藝伎豆，92°C 熱水慢注可展現葡萄、莓果與發酵調性，Origami 極適合詮釋。",
+    "Origami|茶感平衡 / 橙花紅茶": "Origami 的肋條設計提升層次，91°C、悶蒸 30 秒後均速注水，紅茶香可完整展現。",
+    "Origami|堅果奶油 / 焙烤甜感": "建議使用中偏粗研磨、93°C 熱水，Origami 可讓中段甜感與焙烤尾韻更集中。",
+  
+    "法蘭絨濾布|茉莉花香 / 花果調": "濾布法讓酸值柔和滑順，91°C 熱水、長萃取時間能更均衡花果調性，推薦小量注水策略。",
+    "法蘭絨濾布|檸檬柑橘 / 清爽酸值": "濾布能修飾過強酸值，選擇水溫 90°C、偏細研磨，可保留果香又不刺激。",
+    "法蘭絨濾布|莓果熱帶 / 發酵果香": "中度焙火的莓果豆建議用濾布萃取出乾淨輪廓，92°C、悶蒸延長可提升果香穿透力。",
+    "法蘭絨濾布|茶感平衡 / 橙花紅茶": "建議使用 91°C 熱水、偏細研磨與柔慢注水，呈現類紅茶口感。",
+    "法蘭絨濾布|堅果奶油 / 焙烤甜感": "法蘭絨強調醇厚與口感延伸，93°C 熱水、中粗研磨，適合展現奶油感與烘焙甜韻。",
+  
+    "星芒濾杯|茉莉花香 / 花果調": "星芒濾杯流速快、香氣穿透性強，使用 91°C 熱水連續注水能將花香極致釋放。",
+    "星芒濾杯|檸檬柑橘 / 清爽酸值": "注重清爽與乾淨感時，可使用星芒濾杯快注手法與 90°C 熱水，維持酸甜平衡。",
+    "星芒濾杯|莓果熱帶 / 發酵果香": "星芒可加快前段釋放、保留尾段甜味，用於發酵藝伎特別明顯，建議 92°C 搭配中研磨。",
+    "星芒濾杯|茶感平衡 / 橙花紅茶": "用星芒可提升香氣層次，91°C 熱水搭配中細研磨，橙花調會更亮眼。",
+    "星芒濾杯|堅果奶油 / 焙烤甜感": "焙烤系豆使用星芒可保甜感集中，建議 93°C、粗研磨，避免過度萃取。",
+  
+    "川流濾杯|茉莉花香 / 花果調": "川流濾杯的均勻萃取能讓花香更細緻、均衡，91°C、細粉搭配螺旋注水表現優異。",
+    "川流濾杯|檸檬柑橘 / 清爽酸值": "旋流設計能穩定酸值控制，90°C 水溫與中細粉建議分段快注。",
+    "川流濾杯|莓果熱帶 / 發酵果香": "川流能穩定釋放前段莓果酸與尾段甜味，92°C、悶蒸 40 秒可突顯層次。",
+    "川流濾杯|茶感平衡 / 橙花紅茶": "茶感藝伎豆使用川流濾杯能讓口感更圓潤，91°C 中細研磨可拉長尾韻。",
+    "川流濾杯|堅果奶油 / 焙烤甜感": "建議使用 93°C 熱水、粗研磨搭配川流濾杯，讓焙烤香與奶油滑順完美展現。"
+  };
+  
+  function generateSuggestion() {
+    const dripper = document.getElementById("dripper").value;
+    const flavor = document.getElementById("flavor").value;
+    const key = `${dripper}|${flavor}`;
+    const result = suggestions[key] || "請確認您已選擇濾杯與風味偏好，AI 才能給出建議 ☕️";
+    document.getElementById("result").textContent = result;
+  }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
