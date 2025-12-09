@@ -43,8 +43,8 @@ function requireLogin(orRedirect=true){
 function routeAfterLogin(user){
   if(!user) user = requireLogin(false);
   if(!user){ window.location.href = "index.html"; return; }
-  const TTM_URL = "http://127.0.0.1:5500/docs/index1.html";
-  const PLATFORM_URL = "http://127.0.0.1:5500/docs/main.html"; // 確認實際路徑存在
+  const TTM_URL = "index1.html";
+  const PLATFORM_URL = "main.html"; // 確認實際路徑存在
 
   window.location.replace(user.ttmCompleted ? PLATFORM_URL : TTM_URL);
 }

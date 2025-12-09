@@ -185,7 +185,7 @@ h2{ text-align:center; color:#1e6a26; }
           </form>
           <div id="result" class="result" style="display: none;"></div>
           <div class="health-link" id="healthLink" style="display: none;">
-            <a href="http://127.0.0.1:5500/docs/main.html" target="_blank">前往醫療健康管理平台</a>
+            <a href="main.html" target="_blank">前往醫療健康管理平台</a>
         </div>
       </div>
           <!-- 1) 載入共用登入工具 -->
@@ -243,12 +243,12 @@ h2{ text-align:center; color:#1e6a26; }
     const ok = markTtmCompleted(total, stage); // 這個函式在 auth.js 裡
     if (!ok) {
       alert("請先從登入頁登入");
-      window.location.replace("http://127.0.0.1:5500/docs/index.html");
+      window.location.replace("index.html");
       return;
     }
 
     // ✅ 立即導向你的平台首頁
-    window.location.replace("http://127.0.0.1:5500/docs/main.html");
+    window.location.replace("main.html");
   }
 </script>
 </body>
