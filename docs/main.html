@@ -114,6 +114,49 @@
     /* 區塊切換 */
     .content-section{}
     .hidden{ display:none !important; }
+
+    /* 讓 scrollIntoView 不會被 header/主選單遮住（數字可依你 header 高度微調） */
+.content-section{
+  scroll-margin-top: 160px;
+}
+
+/* 主選單 header：標題 + 選單按鈕 */
+.menu-header{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:.6em;
+}
+
+.menu-toggle{
+  display:none;               /* 桌機先隱藏，手機再顯示 */
+  background:#fff;
+  color:#333;
+  border:1px solid var(--border);
+  padding:.45em .7em;
+  border-radius:8px;
+  cursor:pointer;
+}
+
+/* 手機：主選單變「上方收合條」 */
+@media (max-width: 900px){
+  .side-menu{
+    position: sticky;
+    top: 0;
+    z-index: 2000;
+  }
+  .side-menu .menu-toggle{ display:inline-flex; }
+
+  /* 收合時：只顯示 active 那一個 */
+  .side-menu.collapsed a{ display:none; }
+  .side-menu.collapsed a.active{ display:block; }
+
+  /* 讓主選單區塊更像工具列（可選） */
+  .side-menu a{
+    margin-bottom: 0;
+  }
+}
+
   </style>
 </head>
 <body>
@@ -132,15 +175,20 @@
     <div class="left">
       <!-- ====== 主選單（新增） ====== -->
       <nav class="section side-menu" id="mainMenu">
-        <h2>主選單</h2>
+        <div class="menu-header">
+          <h2 style="margin:.2em 0;">主選單</h2>
+          <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false">選單</button>
+        </div>
+      
         <a href="#ttmSummary"  data-target="ttmSummary" class="active">TTM 測驗摘要</a>
-        <a href="#secBiochem"   data-target="secBiochem">基本健康資料檢驗報告</a>
-        <a href="#secGlucose"   data-target="secGlucose">血糖記錄與即時回饋</a>
-        <a href="#secMeds" data-target="secMeds">用藥提醒</a>
+        <a href="#secBiochem"  data-target="secBiochem">基本健康資料檢驗報告</a>
+        <a href="#secGlucose"  data-target="secGlucose">血糖記錄與即時回饋</a>
+        <a href="#secMeds"     data-target="secMeds">用藥提醒</a>
         <a href="#secReminders" data-target="secReminders">回診提醒</a>
-        <a href="#secConsult"   data-target="secConsult">專業諮詢</a>
-        <a href="#secVideo"     data-target="secVideo">衛教影片</a>
+        <a href="#secConsult"  data-target="secConsult">專業諮詢</a>
+        <a href="#secVideo"    data-target="secVideo">衛教影片</a>
       </nav>
+      
       
 
       <!-- TTM 測驗摘要（去掉原本的 display:none；加 content-section 與固定 id） -->
@@ -421,72 +469,89 @@
   <!-- ====== 區塊切換控制（新增） ====== -->
   <script>
     const SECTION_IDS = ['ttmSummary','secBiochem','secGlucose','secReminders','secMeds','secConsult','secVideo'];
-                                         
-
   
-    function showSection(id, {updateHash = true} = {}){
-  // 切換顯示
-  SECTION_IDS.forEach(sid=>{
-    const el = document.getElementById(sid);
-    if(!el) return;
-    el.classList.toggle('hidden', sid !== id);
-  });
-
-  // 選單高亮
-  document.querySelectorAll('#mainMenu a').forEach(a=>{
-    a.classList.toggle('active', a.dataset.target === id);
-  });
-
-  // 更新 URL hash
-  if(updateHash){
-    const newHash = '#' + id;
-    if(location.hash !== newHash){
-      history.replaceState(null, '', newHash);
+    const menuEl = document.getElementById('mainMenu');
+    const toggleBtn = document.getElementById('menuToggle');
+  
+    function setMenuCollapsed(collapsed){
+      if(!menuEl) return;
+      menuEl.classList.toggle('collapsed', collapsed);
+      if(toggleBtn) toggleBtn.setAttribute('aria-expanded', String(!collapsed));
     }
-  }
-
-  // ✅ 捲動到對應區塊（保留一點 header 的高度）
-  const target = document.getElementById(id);
-  if (target) {
-    const header = document.querySelector('header');
-    const headerH = header ? header.offsetHeight : 0;
-    const rect = target.getBoundingClientRect();
-    const y = window.scrollY + rect.top - headerH - 8; // 上面多留一點空間
-
-    window.scrollTo({
-      top: Math.max(y, 0),
-      behavior: 'smooth'
-    });
-  }
-}
-
   
     function validIdFromHash(hash){
       const id = (hash||'').replace(/^#/, '');
       return SECTION_IDS.includes(id) ? id : null;
     }
   
+    function showSection(id, {updateHash = true, collapseMenuOnMobile = true} = {}){
+      // 保護：如果 id 不合法，避免「全部被 hidden」的狀況
+      if(!SECTION_IDS.includes(id)) id = 'ttmSummary';
+  
+      // 切換顯示
+      SECTION_IDS.forEach(sid=>{
+        const el = document.getElementById(sid);
+        if(!el) return;
+        el.classList.toggle('hidden', sid !== id);
+      });
+  
+      // 選單高亮
+      document.querySelectorAll('#mainMenu a').forEach(a=>{
+        a.classList.toggle('active', a.dataset.target === id);
+      });
+  
+      // 更新 hash
+      if(updateHash){
+        const newHash = '#' + id;
+        if(location.hash !== newHash){
+          history.replaceState(null, '', newHash);
+        }
+      }
+  
+      // 捲到該區塊（比 window.scrollTo 更準）
+      const target = document.getElementById(id);
+      if(target){
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+  
+      // 手機：點完自動收合主選單，讓內容佔 8-9 成畫面
+      if(collapseMenuOnMobile && window.matchMedia('(max-width: 900px)').matches){
+        setMenuCollapsed(true);
+      }
+    }
+  
     document.addEventListener('DOMContentLoaded', ()=>{
-      // 1) 點擊選單：依 data-target 切換（阻止預設捲動）
+      // 手機預設收合；桌機預設展開
+      setMenuCollapsed(window.matchMedia('(max-width: 900px)').matches);
+  
+      // 選單按鈕：展開/收合
+      if(toggleBtn){
+        toggleBtn.addEventListener('click', ()=>{
+          const isCollapsed = menuEl.classList.contains('collapsed');
+          setMenuCollapsed(!isCollapsed);
+        });
+      }
+  
+      // 點擊選單：切換區塊
       document.querySelectorAll('#mainMenu a[data-target]').forEach(a=>{
         a.addEventListener('click', (e)=>{
           e.preventDefault();
-          const id = a.dataset.target;
-          showSection(id, {updateHash:true});
+          showSection(a.dataset.target, {updateHash:true, collapseMenuOnMobile:true});
         });
       });
   
-      // 2) 初始：如果 URL 有 hash，直接顯示相對應區塊；否則顯示 TTM
+      // 初始：有 hash 就顯示對應；沒有就顯示 ttmSummary
       const fromHash = validIdFromHash(location.hash);
-      showSection(fromHash || 'ttmSummary', {updateHash:!fromHash});
+      showSection(fromHash || 'ttmSummary', {updateHash:!fromHash, collapseMenuOnMobile:false});
+    });
   
-      // 3) 監聽使用者按「上一頁/下一頁」造成的 hash 變化
-      window.addEventListener('hashchange', ()=>{
-        const id = validIdFromHash(location.hash) || 'ttmSummary';
-        showSection(id, {updateHash:false});
-      });
+    // 返回/上一頁：hash 變化時也要切換
+    window.addEventListener('hashchange', ()=>{
+      const id = validIdFromHash(location.hash) || 'ttmSummary';
+      showSection(id, {updateHash:false, collapseMenuOnMobile:false});
     });
   </script>
+  
 
 <script src="assets/auth.js"></script>
 <script>
