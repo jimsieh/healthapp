@@ -508,7 +508,14 @@
   document.addEventListener('DOMContentLoaded', () => requireLogin(true));
 </script>
 
-  
+<script>
+  window.addEventListener('load', function () {
+    // 確保載入完成後，捲回頁面頂端
+    window.scrollTo(0, 0);
+  });
+</script>
+
+
 
   <script>
     /* ================ 工具 ================ */
