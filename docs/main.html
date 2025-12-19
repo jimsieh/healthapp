@@ -483,6 +483,18 @@
       const id = (hash||'').replace(/^#/, '');
       return SECTION_IDS.includes(id) ? id : null;
     }
+
+    function getMobileTopOffset(){
+      const isMobile = window.matchMedia('(max-width: 900px)').matches;
+     if(!isMobile) return 16;
+
+      // 用 sticky 主選單高度當作 offset，避免內容被蓋住
+    const menu = document.querySelector('.side-menu');
+    if(!menu) return 16;
+
+    return Math.ceil(menu.getBoundingClientRect().height) + 12; // +12 是留白
+    }
+
   
     function showSection(id, {updateHash = true, collapseMenuOnMobile = true} = {}){
       // 保護：如果 id 不合法，避免「全部被 hidden」的狀況
@@ -508,16 +520,26 @@
         }
       }
   
-      // 捲到該區塊（比 window.scrollTo 更準）
-      const target = document.getElementById(id);
-      if(target){
-        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }
-  
-      // 手機：點完自動收合主選單，讓內容佔 8-9 成畫面
-      if(collapseMenuOnMobile && window.matchMedia('(max-width: 900px)').matches){
-        setMenuCollapsed(true);
-      }
+     // 手機：先收合主選單（高度會變），再捲動才不會算錯位置
+     const isMobile = window.matchMedia('(max-width: 900px)').matches;
+     if(collapseMenuOnMobile && isMobile){
+     setMenuCollapsed(true);
+     }
+
+     // 捲到該區塊：用 offset scrollTo，避免 iPhone scrollIntoView 被 sticky 擋住
+     const target = document.getElementById(id);
+     if(target){
+     requestAnimationFrame(() => {
+     const offset = getMobileTopOffset();
+     const top = target.getBoundingClientRect().top + window.pageYOffset - offset;
+
+    window.scrollTo({
+      top: Math.max(0, top),
+      behavior: 'smooth'
+    });
+  });
+}
+
     }
   
     document.addEventListener('DOMContentLoaded', ()=>{
