@@ -226,10 +226,12 @@
           </div>
         </div>
         <div class="controls">
-          <button id="saveGlucoseBtn">儲存血糖紀錄</button>
-          <button id="shareGlucoseBtn">分享最新血糖</button>
-          <button id="clearGlucoseBtn" style="background:#9e9e9e;">清除所有紀錄</button>
+         <button id="saveGlucoseBtn">儲存血糖紀錄</button>
+         <button id="shareGlucoseBtn">分享最新血糖</button>
+         <button id="lineShareGlucoseBtn" style="background:#06C755;">LINE 分享</button>
+         <button id="clearGlucoseBtn" style="background:#9e9e9e;">清除所有紀錄</button>
         </div>
+
 
         <div class="list" id="glucoseHistory"></div>
       </div>
@@ -732,6 +734,51 @@
         shareText(subject, body);
       }
     }
+    function buildGlucoseShareText(item){
+     const tag = evalGlucose(item.value);
+     return `血糖更新：${item.value} mg/dL（${tag.label}）
+     量測時間：${new Date(item.time).toLocaleString()}
+     回饋建議：${tag.advice}
+
+   （此訊息由個案於自我管理平台分享）`;
+    }
+
+    async function copyToClipboard(text){
+    try{
+    await navigator.clipboard.writeText(text);
+    return true;
+     }catch(e){
+    // 舊瀏覽器 fallback
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    ta.remove();
+    return true;
+  }
+}
+
+function isMobileDevice(){
+  return /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+}
+
+async function shareLatestToLINE(){
+  const logs = JSON.parse(localStorage.getItem('glucoseLogs')||'[]');
+  if(logs.length===0){ toast('目前沒有可分享的血糖紀錄','err'); return; }
+
+  const text = buildGlucoseShareText(logs[0]);
+
+  if(isMobileDevice()){
+    // 手機：嘗試直接叫 LINE
+    window.location.href = `line://msg/text/${encodeURIComponent(text)}`;
+  }else{
+    // 桌機：多數情況無法直接開 LINE 編輯器 → 改複製
+    await copyToClipboard(text);
+    alert('已複製血糖分享文字，請打開 LINE 後貼上即可分享。');
+  }
+}
+
 
     function shareGlucoseById(id){
       const logs = JSON.parse(localStorage.getItem('glucoseLogs')||'[]');
@@ -767,6 +814,8 @@
     $('saveGlucoseBtn').onclick = saveGlucose;
     $('shareGlucoseBtn').onclick = shareGlucoseLatest;
     $('clearGlucoseBtn').onclick = clearGlucose;
+    $('lineShareGlucoseBtn').onclick = shareLatestToLINE;
+
     loadGlucoseHistory();
     renderGlucoseLight(null);
 
