@@ -180,23 +180,25 @@
           <button type="button" class="menu-toggle" id="menuToggle" aria-expanded="false">選單</button>
         </div>
       
-        <a href="#ttmSummary"  data-target="ttmSummary" class="active">TTM 測驗摘要</a>
-        <a href="#secBiochem"  data-target="secBiochem">基本健康資料檢驗報告</a>
-        <a href="#secGlucose"  data-target="secGlucose">血糖記錄與即時回饋</a>
+        <a href="#ttmSummary"  data-target="ttmSummary" class="active">TTM 測驗</a>
+        <a href="#secVideo"    data-target="secVideo">衛教影片</a>
+        <a href="#secBiochem"  data-target="secBiochem">基本健康資料與檢驗報告</a>
+        <a href="#secGlucose"  data-target="secGlucose">血糖檢測專區</a>
         <a href="#secMeds"     data-target="secMeds">用藥提醒</a>
         <a href="#secReminders" data-target="secReminders">回診提醒</a>
         <a href="#secConsult"  data-target="secConsult">專業諮詢</a>
-        <a href="#secVideo"    data-target="secVideo">衛教影片</a>
       </nav>
       
       
 
       <!-- TTM 測驗摘要（去掉原本的 display:none；加 content-section 與固定 id） -->
       <div class="section content-section" id="ttmSummary">
-        <h2>TTM 測驗摘要</h2>
-        <p id="ttmGroupText"></p>
+        <h2>TTM 測驗結果</h2>
+      <!-- 分組結果不顯示（避免讓使用者知道自己是操作/控制組或A/B組） -->
+      <!-- <p id="ttmGroupText"></p> -->
         <p id="ttmScoresText" class="muted"></p>
       </div>
+
 
       <!-- (二) 血糖記錄與即時回饋 -->
       <div class="section content-section" id="secGlucose">
@@ -600,20 +602,23 @@
     }
     function nowISO(){ return new Date().toISOString(); }
 
-    /* ================ 讀取 TTM 摘要（微調：不再改 display，交由 showSection 控制） ================ */
-    (function loadTTM(){
-      try{
-        const group = localStorage.getItem('ttmGroup');
-        const scores = JSON.parse(localStorage.getItem('ttmScores')||'null');
-        if(group && scores){
-          $('ttmGroupText').textContent = `您的分組結果：${group}`;
-          $('ttmScoresText').textContent = `各題分數：${scores.join('、')}`;
-        }else{
-          $('ttmGroupText').textContent = '尚未有 TTM 測驗結果';
-          $('ttmScoresText').textContent = '';
-        }
-      }catch(e){}
-    })();
+    /* ================ 讀取 TTM 摘要（不顯示分組，只顯示各題分數） ================ */
+   (function loadTTM(){
+  try{
+    const scores = JSON.parse(localStorage.getItem('ttmScores')||'null');
+
+    // 不顯示分組結果（避免暴露操作/控制組或A/B組）
+    const groupEl = $('ttmGroupText');
+    if (groupEl) groupEl.textContent = '';   // 或改成 'TTM 測驗結果如下：'
+
+    if (scores && Array.isArray(scores) && scores.length){
+      $('ttmScoresText').textContent = `各題分數：${scores.join('、')}`;
+    }else{
+      $('ttmScoresText').textContent = '尚未有 TTM 測驗結果';
+    }
+  }catch(e){}
+   })();
+
 
     /* ================ (二) 血糖即時回饋與紀錄 ================ */
     function evalGlucose(v){
