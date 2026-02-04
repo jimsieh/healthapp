@@ -274,7 +274,7 @@
         <a href="#secBiochem"  data-target="secBiochem">基本健康資料與檢驗報告</a>
         <a href="#secGlucose"  data-target="secGlucose">血糖檢測專區</a>
         <a href="#secMeds"     data-target="secMeds">用藥提醒</a>
-        <a href="#secReminders" data-target="secReminders">血糖監測回診提醒</a>
+        <a href="#secReminders" data-target="secReminders">血糖監測與回診提醒</a>
         <a href="#secConsult"  data-target="secConsult">專業諮詢</a>
       </nav>
       
@@ -416,6 +416,11 @@
     </div>
 
     <div>
+      <label for="BUN"> 尿素氮BUN（mg/dL）</label>
+      <input type="number" id="BUN" placeholder="例如：20"/>
+    </div>
+
+    <div>
       <label for="urineProtein">尿蛋白UP（mg/dL 或試紙）</label>
       <input type="text" id="urineProtein" placeholder="例如：陰性 / 30 mg/dL"/>
     </div>
@@ -517,10 +522,10 @@
 
 <div class="consult-grid" id="consultGrid">
   <!-- row 1 -->
-  <div class="cg-label">諮詢對象</div>
+  <div class="cg-label">預諮詢對象</div>
   <div class="cg-field cg-span2">
     <select id="role">
-      <option value="patient">個案（我）</option>
+      <option value="doctor">醫師</option>
       <option value="nurse">護理師</option>
       <option value="dietitian">營養師</option>
       <option value="pharmacist">藥師</option>
@@ -556,12 +561,12 @@
   <input type="date" id="consultDate">
 </div>
 <div class="cg-field" id="reserveFieldsR" style="display:none;">
-  <div class="cg-subtitle">時間（早、中、晚）</div>
+  <div class="cg-subtitle">時間（上午、下午、晚上）</div>
   <select id="consultSlot">
     <option value="">請選擇</option>
-    <option value="morning">早</option>
-    <option value="noon">中</option>
-    <option value="evening">晚</option>
+    <option value="morning">上午</option>
+    <option value="noon">下午</option>
+    <option value="evening">晚上</option>
   </select>
 </div>
 
@@ -570,45 +575,68 @@
 
 <div class="consult-actions">
   <button id="btnSendConsult">送出留言</button>
+   <!-- ✅ 新增：儲存預約 -->
+  <button id="btnSaveReserve" style="background:#1976D2;">儲存預約</button>
   <button id="btnClearConsult">清空留言紀錄</button>
+
 </div>
+<!-- ✅ 新增：顯示儲存結果 -->
+<div id="reserveResult" class="result"></div>
 
 <div id="consultList">目前沒有留言</div>
 </div>  <!-- 關閉 .consult-grid -->
 </div>  <!-- ✅ 這行是補上的：關閉 #secConsult -->
 
 
-<!-- (五) 血糖監測回診提醒（新增，修正：原本選單有但內容不存在） -->
+<!-- (五) 血糖監測與回診提醒（新增，修正：原本選單有但內容不存在） -->
 <div class="section content-section" id="secReminders">
   <h2>血糖監測回診提醒</h2>
   <p class="muted">每日提醒（請允許本站通知，以便在頁面開啟時提示）</p>
 
-  <div class="grid">
-    <div>
-      <label for="tPreMeal">早餐前</label>
-      <input type="time" id="tPreMeal" />
+  <div class="reminder-wrap">
+    <!-- 左：血糖監測提醒 -->
+    <div class="reminder-block">
+      <div class="reminder-title">一、血糖監測提醒</div>
+
+      <div class="reminder-fields">
+        <div class="field">
+          <label for="tPreMeal">早餐前</label>
+          <input type="time" id="tPreMeal" />
+        </div>
+
+        <div class="field">
+          <label for="tPostMeal">晚餐後</label>
+          <input type="time" id="tPostMeal" />
+        </div>
+
+        <div class="field" style="margin-bottom:0;">
+          <label for="tBedtime">睡前</label>
+          <input type="time" id="tBedtime" />
+        </div>
+      </div>
     </div>
-    <div>
-      <label for="tPostMeal">晚餐後</label>
-      <input type="time" id="tPostMeal" />
-    </div>
-    <div>
-      <label for="tBedtime">睡前</label>
-      <input type="time" id="tBedtime" />
-    </div>
-    <div>
-      <label for="nextAppt">下次回診日期</label>
-      <input type="date" id="nextAppt" />
+
+    <!-- 右：回診提醒 -->
+    <div class="reminder-block">
+      <div class="reminder-title">二、回診提醒</div>
+
+      <div class="reminder-fields">
+        <div class="field" style="margin-bottom:0;">
+          <label for="nextAppt">下次回診日期</label>
+          <input type="date" id="nextAppt" />
+        </div>
+      </div>
     </div>
   </div>
 
-  <div class="controls" style="margin-top:.6em;">
+  <div class="controls" style="margin-top:.9em;">
     <button id="saveRemindersBtn">儲存提醒設定</button>
     <button id="downloadICSBtn" style="background:#1976D2;">匯出回診行事曆（.ics）</button>
   </div>
 
   <div id="reminderResult" class="result"></div>
- </div>
+</div>
+
 
 
 
@@ -975,7 +1003,7 @@ async function shareLatestToLINE(){
 function saveBiochem(){
   const payload = {
     height:$('height').value, weight:$('weight').value, waist:$('waist').value, hip:$('hip').value,
-    creatinine:$('creatinine').value, urineProtein:$('urineProtein').value,
+    creatinine:$('creatinine').value,BUN:$('BUN').value, urineProtein:$('urineProtein').value,
     ast:$('ast').value, alt:$('alt').value, hba1c:$('hba1c').value,
     tc:$('tc').value, tg:$('tg').value, hdl:$('hdl').value, ldl:$('ldl').value,
     savedAt: nowISO()
@@ -1305,13 +1333,86 @@ function initConsultPanel(){
 
 initConsultPanel();
 
+/* ============ 預約諮詢：獨立儲存/載入（新增） ============ */
+const RESERVE_KEY = 'consultReserveV1';
+
+function showReserveResult(msg, ok=true){
+  const box = document.getElementById('reserveResult');
+  if(!box) return;
+  box.textContent = msg;
+  box.className = ok ? 'result ok' : 'result err';
+}
+
+function saveReserve(){
+  const yes = document.getElementById('reserveYes')?.checked;
+  const date = document.getElementById('consultDate')?.value || '';
+  const slot = document.getElementById('consultSlot')?.value || '';
+  const consultTime = document.getElementById('consultTime')?.value || '';
+
+  if(yes){
+    if(!date || !slot){
+      showReserveResult('請先選擇日期與時段再儲存預約。', false);
+      toast('請先選擇日期與時段', 'err');
+      return;
+    }
+  }
+
+  const payload = {
+    need: !!yes,
+    date,
+    slot,
+    consultTime, // 已由 syncConsultTime() 同步
+    savedAt: new Date().toISOString()
+  };
+
+  localStorage.setItem(RESERVE_KEY, JSON.stringify(payload));
+  showReserveResult(yes ? '已儲存預約諮詢。' : '已儲存：不需要預約。', true);
+  toast('預約設定已儲存', 'ok');
+}
+
+function loadReserve(){
+  let r = null;
+  try{ r = JSON.parse(localStorage.getItem(RESERVE_KEY) || 'null'); }catch(e){ r = null; }
+  if(!r) return;
+
+  const yesEl = document.getElementById('reserveYes');
+  const noEl  = document.getElementById('reserveNo');
+
+  if(r.need){
+    if(yesEl) yesEl.checked = true;
+    setReserveUI(true);
+  }else{
+    if(noEl) noEl.checked = true;
+    setReserveUI(false);
+  }
+
+  const dateEl = document.getElementById('consultDate');
+  const slotEl = document.getElementById('consultSlot');
+  if(dateEl) dateEl.value = r.date || '';
+  if(slotEl) slotEl.value = r.slot || '';
+
+  // 重新同步 hidden consultTime
+  syncConsultTime();
+
+  if(typeof r.need === 'boolean'){
+    showReserveResult(r.need ? '已載入已儲存的預約。' : '已載入：不需要預約。', true);
+  }
+}
+
+// 綁定按鈕
+document.getElementById('btnSaveReserve')?.addEventListener('click', saveReserve);
+
+// 進頁面先載入一次
+loadReserve();
+
+
 
 /* ============ (四) 專業諮詢：送出留言 / 清空留言（新增） ============ */
 const CONSULT_KEY = 'consultMessagesV1';
 
 function roleLabel(v){
   const map = {
-    patient:'個案（我）',
+    doctor:'醫師',
     nurse:'護理師',
     dietitian:'營養師',
     pharmacist:'藥師',
