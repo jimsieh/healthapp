@@ -246,6 +246,23 @@
   .cg-span2{ grid-column: auto; }
 }
 
+.med-time-item{
+  display:flex;
+  align-items:center;
+  gap:.6em;
+  margin-bottom:.35em;
+}
+
+.med-time-item span{
+  min-width:90px;
+  color:#555;
+  font-size:.95em;
+}
+
+.med-time-item input[type="time"]{
+  max-width:150px;
+  margin-bottom:0;
+}
   </style>
 </head>
 <body>
@@ -476,7 +493,7 @@
       <p class="muted">
         每一筆藥物都可以設定自己的用藥頻率與提醒時間。預設會在服藥時間 <strong>30 分鐘前</strong> 提醒，也可以自行調整。
       </p>
-    
+
       <!-- 口服藥清單 -->
       <div class="hint">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:.8em;">
@@ -485,7 +502,7 @@
         </div>
         <div id="oralList" class="list" style="margin-top:.6em;"></div>
       </div>
-    
+
       <!-- 胰島素清單 -->
       <div class="hint" style="margin-top:.8em;">
         <div style="display:flex;align-items:center;justify-content:space-between;gap:.8em;">
@@ -497,6 +514,7 @@
     
       <div class="controls" style="margin-top:.8em;">
         <button id="saveMedsBtn">儲存用藥提醒</button>
+         <button id="downloadMedsICSBtn" style="background:#1976D2;">匯出用藥行事曆（.ics）</button>
         <button id="clearMedsBtn" style="background:#9e9e9e;">清除所有設定</button>
       </div>
       <div id="medsResult" class="result"></div>
@@ -653,10 +671,10 @@
   <!-- ====== 區塊切換控制（新增） ====== -->
   <script>
     const SECTION_IDS = ['ttmSummary','secBiochem','secGlucose','secReminders','secMeds','secConsult','secVideo'];
-  
+
     const menuEl = document.getElementById('mainMenu');
     const toggleBtn = document.getElementById('menuToggle');
-  
+
     function setMenuCollapsed(collapsed){
       if(!menuEl) return;
       menuEl.classList.toggle('collapsed', collapsed);
@@ -1529,24 +1547,100 @@ const MEDS_V2_KEY = 'medicationReminderV2';
 
 // 頻率選項：沿用你原本的概念
 const MED_FREQ_OPTIONS = [
-  { value: 'preB',      label: '早餐飯前',      defaultTime: '07:30' },
-  { value: 'postB',     label: '早餐飯後',      defaultTime: '08:00' },
-  { value: 'pre3',      label: '三餐飯前',      defaultTime: '07:30' },  // 只用其中一個時間做提醒起點
-  { value: 'post3',     label: '三餐飯後',      defaultTime: '08:00' },
-  { value: 'pre3+bed',  label: '三餐飯前＋睡前', defaultTime: '07:30' },
-  { value: 'post3+bed', label: '三餐飯後＋睡前', defaultTime: '08:00' },
+  { value: 'preB',      label: '早餐飯前' },
+  { value: 'postB',     label: '早餐飯後' },
+  { value: 'pre3',      label: '三餐飯前' },
+  { value: 'post3',     label: '三餐飯後' },
+  { value: 'pre3+bed',  label: '三餐飯前＋睡前' },
+  { value: 'post3+bed', label: '三餐飯後＋睡前' },
 ];
 
-// 頻率文字，用在通知內容
 const MED_FREQ_LABEL = MED_FREQ_OPTIONS.reduce((acc, x) => {
   acc[x.value] = x.label;
   return acc;
 }, {});
 
-// 取得某個頻率的預設時間
+/* 每種頻率對應多個提醒時間 */
+const MED_TIME_SLOTS = {
+  preB: [
+    { key:'preB', label:'早餐飯前', time:'07:30' },
+  ],
+  postB: [
+    { key:'postB', label:'早餐飯後', time:'08:30' },
+  ],
+  pre3: [
+    { key:'preB', label:'早餐飯前', time:'07:30' },
+    { key:'preL', label:'午餐飯前', time:'11:30' },
+    { key:'preD', label:'晚餐飯前', time:'17:30' },
+  ],
+  post3: [
+    { key:'postB', label:'早餐飯後', time:'08:30' },
+    { key:'postL', label:'午餐飯後', time:'12:30' },
+    { key:'postD', label:'晚餐飯後', time:'18:30' },
+  ],
+  'pre3+bed': [
+    { key:'preB', label:'早餐飯前', time:'07:30' },
+    { key:'preL', label:'午餐飯前', time:'11:30' },
+    { key:'preD', label:'晚餐飯前', time:'17:30' },
+    { key:'bed',  label:'睡前',     time:'21:30' },
+  ],
+  'post3+bed': [
+    { key:'postB', label:'早餐飯後', time:'08:30' },
+    { key:'postL', label:'午餐飯後', time:'12:30' },
+    { key:'postD', label:'晚餐飯後', time:'18:30' },
+    { key:'bed',   label:'睡前',     time:'21:30' },
+  ],
+};
+
+function slotsForFreq(freq){
+  return MED_TIME_SLOTS[freq] || MED_TIME_SLOTS.preB;
+}
+
 function defaultTimeForFreq(freq) {
-  const found = MED_FREQ_OPTIONS.find(f => f.value === freq);
-  return (found && found.defaultTime) || '08:00';
+  const slots = slotsForFreq(freq);
+  return slots[0]?.time || '08:00';
+}
+
+function collectTimesFromRow(row){
+  return Array.from(row.querySelectorAll('.med-time')).map(input => ({
+    key: input.dataset.key,
+    label: input.dataset.label,
+    time: input.value
+  }));
+}
+
+function normalizeTimes(freq, savedTimes = []){
+  const slots = slotsForFreq(freq);
+
+  return slots.map(slot => {
+    const old = Array.isArray(savedTimes)
+      ? savedTimes.find(x => x.key === slot.key)
+      : null;
+
+    return {
+      key: slot.key,
+      label: slot.label,
+      time: old?.time || slot.time
+    };
+  });
+}
+
+function renderMedTimes(row, times){
+  const box = row.querySelector('.med-times');
+  if(!box) return;
+
+  box.innerHTML = times.map(t => `
+    <div class="med-time-item">
+      <span>${t.label}</span>
+      <input
+        type="time"
+        class="med-time"
+        data-key="${t.key}"
+        data-label="${t.label}"
+        value="${t.time || ''}"
+      >
+    </div>
+  `).join('');
 }
 
 // hh:mm 字串 - N 分鐘，回傳新的 hh:mm（24 小時制）
@@ -1571,7 +1665,10 @@ function createMedRow(type, data = {}) {
   const name = data.name || '';
   const dose = data.dose || '';
   const freq = data.freq || 'preB';
-  const time = data.time || defaultTimeForFreq(freq);
+  const times = normalizeTimes(
+  freq,
+  data.times || (data.time ? [{ key: slotsForFreq(freq)[0].key, time: data.time }] : [])
+);
   const enableRemind = data.enableRemind !== false;  // 預設 true
   const leadMinutes = (typeof data.leadMinutes === 'number') ? data.leadMinutes : 30;
 
@@ -1600,8 +1697,8 @@ function createMedRow(type, data = {}) {
           </select>
         </div>
         <div class="col">
-          <label style="display:block;margin-bottom:.2em;">服藥時間</label>
-          <input type="time" class="med-time" value="${time}">
+        <label style="display:block;margin-bottom:.2em;">提醒時間</label>
+        <div class="med-times"></div>
         </div>
       </div>
 
@@ -1621,16 +1718,14 @@ function createMedRow(type, data = {}) {
       <button type="button" class="btnDelMed" style="background:#9e9e9e;">刪除</button>
     </div>
   `;
+  renderMedTimes(row, times);
 
-  // 頻率改變時，如果時間欄是空的，帶入預設時間
-  const freqSelect = row.querySelector('.med-freq');
-  const timeInput = row.querySelector('.med-time');
-  freqSelect.addEventListener('change', () => {
-    if (!timeInput.value) {
-      timeInput.value = defaultTimeForFreq(freqSelect.value);
-    }
-  });
-
+const freqSelect = row.querySelector('.med-freq');
+freqSelect.addEventListener('change', () => {
+  const oldTimes = collectTimesFromRow(row);
+  const nextTimes = normalizeTimes(freqSelect.value, oldTimes);
+  renderMedTimes(row, nextTimes);
+});
   // 刪除按鈕
   row.querySelector('.btnDelMed').addEventListener('click', () => {
     const parent = row.parentElement;
@@ -1654,11 +1749,12 @@ function collectMedRows() {
     const name = row.querySelector('.med-name')?.value.trim() || '';
     const dose = row.querySelector('.med-dose')?.value.trim() || '';
     const freq = row.querySelector('.med-freq')?.value || 'preB';
-    const time = row.querySelector('.med-time')?.value || defaultTimeForFreq(freq);
+    const times = collectTimesFromRow(row).filter(t => t.time);
+    const time = times[0]?.time || defaultTimeForFreq(freq);
     const enableRemind = !!row.querySelector('.med-enable')?.checked;
     const leadMinutes = Number(row.querySelector('.med-lead')?.value || 30);
 
-    return { id, type, name, dose, freq, time, enableRemind, leadMinutes };
+    return { id, type, name, dose, freq, time, times, enableRemind, leadMinutes };
   }).filter(m => m.name);   // 沒有藥名的不存
 }
 
@@ -1720,6 +1816,99 @@ function clearMeds() {
   r.textContent = '已清除所有設定。';
   r.className = 'result';
 }
+// 將 JS Date 轉成 ICS 用的本地時間格式：YYYYMMDDTHHMM00
+function medIcsDateTimeLocal(d){
+  const pad = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}T${pad(d.getHours())}${pad(d.getMinutes())}00`;
+}
+
+// 取得下一次指定時間，例如 08:00
+function medNextOccurrenceForTime(hhmm){
+  const [hh, mm] = (hhmm || '08:00').split(':').map(x => parseInt(x, 10));
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hh || 0, mm || 0, 0);
+
+  if(d.getTime() <= now.getTime()){
+    d.setDate(d.getDate() + 1);
+  }
+
+  return d;
+}
+
+// 產生用藥提醒 ICS
+function buildMedsICS(meds){
+  const lines = [];
+  const now = new Date();
+  const dtstamp = medIcsDateTimeLocal(now);
+  const uidBase = crypto.randomUUID ? crypto.randomUUID() : String(Date.now());
+
+  lines.push('BEGIN:VCALENDAR');
+  lines.push('VERSION:2.0');
+  lines.push('PRODID:-//go Health//Medication Reminders//ZH-TW');
+  lines.push('CALSCALE:GREGORIAN');
+  lines.push('METHOD:PUBLISH');
+
+  meds.forEach((m, idx) => {
+  if(!m.name) return;
+
+  const times = Array.isArray(m.times) && m.times.length
+    ? m.times
+    : [{ label: MED_FREQ_LABEL[m.freq] || '用藥時間', time: m.time }];
+
+  const lead = Number(m.leadMinutes || 30);
+
+  times.forEach((t, timeIdx) => {
+    if(!t.time) return;
+
+    const start = medNextOccurrenceForTime(t.time);
+
+    lines.push('BEGIN:VEVENT');
+    lines.push(`UID:${uidBase}-med-${idx}-${timeIdx}@gohealth`);
+    lines.push(`DTSTAMP:${dtstamp}`);
+    lines.push(`DTSTART:${medIcsDateTimeLocal(start)}`);
+    lines.push('RRULE:FREQ=DAILY');
+    lines.push(`SUMMARY:用藥提醒：${m.name}（${t.label || '用藥時間'}）`);
+    lines.push(`DESCRIPTION:${t.label || ''}${m.dose ? '；劑量/用法：' + m.dose : ''}`);
+
+    if(m.enableRemind){
+      lines.push('BEGIN:VALARM');
+      lines.push(`TRIGGER:-PT${lead}M`);
+      lines.push('ACTION:DISPLAY');
+      lines.push(`DESCRIPTION:${t.label || '用藥時間'}：請依醫囑服用 ${m.name}`);
+      lines.push('END:VALARM');
+    }
+
+    lines.push('END:VEVENT');
+  });
+});
+
+  lines.push('END:VCALENDAR');
+  return lines.join('\r\n');
+}
+
+// 下載用藥提醒 ICS
+function downloadMedsICS(){
+  const meds = collectMedRows();
+
+  if(meds.length === 0){
+    toast('請至少填寫一筆藥品名稱再匯出', 'err');
+    return;
+  }
+
+  const ics = buildMedsICS(meds);
+  const blob = new Blob([ics], { type: 'text/calendar;charset=utf-8' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'gohealth-medication-reminders.ics';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  toast('已匯出用藥行事曆檔案（.ics）', 'ok');
+}
 
 // 綁定按鈕
 document.getElementById('addOralRowBtn').addEventListener('click', () => {
@@ -1729,6 +1918,7 @@ document.getElementById('addInsRowBtn').addEventListener('click', () => {
   document.getElementById('insList').appendChild(createMedRow('ins'));
 });
 document.getElementById('saveMedsBtn').addEventListener('click', saveMeds);
+document.getElementById('downloadMedsICSBtn')?.addEventListener('click', downloadMedsICS);
 document.getElementById('clearMedsBtn').addEventListener('click', clearMeds);
 
 // 初次載入
@@ -1751,29 +1941,36 @@ window.__medReminderCheck = function () {
 
   meds.forEach(m => {
     if (!m.enableRemind) return;
-    if (!m.name || !m.time) return;
+    if (!m.name) return;
 
     const lead = (typeof m.leadMinutes === 'number') ? m.leadMinutes : 30;
-    const remindAt = timeMinusMinutes(m.time, lead);
-    if (remindAt === hhmmNow) {
-      const freqLabel = MED_FREQ_LABEL[m.freq] || '用藥時間';
-      const title = '用藥提醒';
-      const body = `${freqLabel}：請依醫囑服用 ${m.name}${m.dose ? '（' + m.dose + '）' : ''}`;
 
-      askNotifyPermission().then(ok => {
-        if (ok) new Notification(title, { body });
-      });
+    const times = Array.isArray(m.times) && m.times.length
+      ? m.times
+      : [{ label: MED_FREQ_LABEL[m.freq] || '用藥時間', time: m.time }];
 
-      const box = document.getElementById('medsResult');
-      if (box) {
-        box.textContent = body;
-        box.className = 'result';
+    times.forEach(t => {
+      if (!t.time) return;
+
+      const remindAt = timeMinusMinutes(t.time, lead);
+
+      if (remindAt === hhmmNow) {
+        const title = '用藥提醒';
+        const body = `${t.label}：請依醫囑服用 ${m.name}${m.dose ? '（' + m.dose + '）' : ''}`;
+
+        askNotifyPermission().then(ok => {
+          if (ok) new Notification(title, { body });
+        });
+
+        const box = document.getElementById('medsResult');
+        if (box) {
+          box.textContent = body;
+          box.className = 'result';
+        }
       }
-    }
+    });
   });
 };
-
-
 
 
     /* ================ (六) 使用時間與衛教觀看時間 ================ */
